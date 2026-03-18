@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kontakter - Emne 2-måten</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 24px;
+            color: #222;
+        }
+
+        #app {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        .menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 8px;
+            background: #1976d2;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.secondary {
+            background: #666;
+        }
+
+        button.danger {
+            background: #c62828;
+        }
+
+        button.small {
+            padding: 6px 10px;
+            font-size: 13px;
+        }
+
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .contact {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+
+        .contact-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .empty {
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const model = {
+            app: {
+                currentPage: 'list',
+                selectedContactId: null,
+            },
+            viewState: {
+                list: {
+                    search: '',
+                },
+                add: {
+                    name: '',
+                    phone: '',
+                    email: '',
+                },
+                edit: {
+                    selectedContactId: '',
+                    name: '',
+                    phone: '',
+                    email: '',
+                },
+            },
+            contacts: [
+                { id: 1, name: 'Terje', phone: '123', email: 'terje@ghjgh' },
+                { id: 2, name: 'Per', phone: '456', email: 'per@ghjgh' },
+                { id: 3, name: 'Pål', phone: '789', email: 'paal@ghjgh' },
+            ],
+        };
+
+        updateView();
+
+        function updateView() {
+            if (model.app.currentPage === 'add') {
+                updateViewAdd();
+            } else if (model.app.currentPage === 'edit') {
+                updateViewEdit();
+            } else {
+                updateViewList();
+            }
+        }
+
+        function updateViewList() {
+            const searchText = model.viewState.list.search.toLowerCase().trim();
+
+            const filteredContacts = model.contacts.filter(contact =>
+                contact.name.toLowerCase().includes(searchText)
+                || contact.phone.toLowerCase().includes(searchText)
+                || contact.email.toLowerCase().includes(searchText)
+            );
+
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <div class="card">
+                    <h1>Kontakter</h1>
+
+                    <div class="menu">
+                        <button onclick="goToList()">Liste</button>
+                        <button onclick="goToAdd()">Ny kontakt</button>
+                    </div>
+
+                    <label>Søk</label>
+                    <input
+                        type="text"
+                        placeholder="Søk på navn, telefon eller e-post"
+                        value="${escapeHtml(model.viewState.list.search)}"
+                        onchange="model.viewState.list.search = this.value; updateView();"
+                    />
+
+                    ${
+                        filteredContacts.length === 0
+                            ? `<p class="empty">Ingen kontakter funnet.</p>`
+                            : filteredContacts.map(contact => /*HTML*/`
+                                <div class="contact">
+                                    <div class="contact-name">${escapeHtml(contact.name)}</div>
+                                    <div>Telefon: ${escapeHtml(contact.phone)}</div>
+                                    <div>E-post: ${escapeHtml(contact.email)}</div>
+                                    <div class="contact-actions">
+                                        <button class="small" onclick="goToEdit(${contact.id})">Rediger</button>
+                                        <button class="small danger" onclick="deleteContact(${contact.id})">Slett</button>
+                                    </div>
+                                </div>
+                            `).join('')
+                    }
+                </div>
+            `;
+        }
+
+        function updateViewAdd() {
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <div class="card">
+                    <h1>Ny kontakt</h1>
+
+                    <div class="menu">
+                        <button class="secondary" onclick="goToList()">Tilbake til liste</button>
+                    </div>
+
+                    <label>Navn</label>
+                    <input
+                        type="text"
+                        value="${escapeHtml(model.viewState.add.name)}"
+                        oninput="model.viewState.add.name = this.value"
+                    />
+
+                    <label>Telefon</label>
+                    <input
+                        type="text"
+                        value="${escapeHtml(model.viewState.add.phone)}"
+                        oninput="model.viewState.add.phone = this.value"
+                    />
+
+                    <label>E-post</label>
+                    <input
+                        type="text"
+                        value="${escapeHtml(model.viewState.add.email)}"
+                        oninput="model.viewState.add.email = this.value"
+                    />
+
+                    <button onclick="addContact()">Lagre kontakt</button>
+                </div>
+            `;
+        }
+
+        function updateViewEdit() {
+            const contact = getSelectedContact();
+
+            if (!contact) {
+                goToList();
+                return;
+            }
+
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <div class="card">
+                    <h1>Rediger kontakt</h1>
+
+                    <div class="menu">
+                        <button class="secondary" onclick="goToList()">Tilbake til liste</button>
+                    </div>
+
+                    <label>Navn</label>
+                    <input
+                        type="text"
+                        value="${escapeHtml(model.viewState.edit.name)}"
+                        oninput="model.viewState.edit.name = this.value"
+                    />
+
+                    <label>Telefon</label>
+                    <input
+                        type="text"
+                        value="${escapeHtml(model.viewState.edit.phone)}"
+                        oninput="model.viewState.edit.phone = this.value"
+                    />
+
+                    <label>E-post</label>
+                    <input
+                        type="text"
+                        value="${escapeHtml(model.viewState.edit.email)}"
+                        oninput="model.viewState.edit.email = this.value"
+                    />
+
+                    <button onclick="saveEditedContact()">Lagre endringer</button>
+                </div>
+            `;
+        }
+
+        function goToList() {
+            model.app.currentPage = 'list';
+            updateView();
+        }
+
+        function goToAdd() {
+            model.app.currentPage = 'add';
+            updateView();
+        }
+
+        function goToEdit(id) {
+            const contact = model.contacts.find(c => c.id === id);
+            if (!contact) return;
+
+            model.app.selectedContactId = id;
+            model.viewState.edit.name = contact.name;
+            model.viewState.edit.phone = contact.phone;
+            model.viewState.edit.email = contact.email;
+            model.app.currentPage = 'edit';
+            updateView();
+        }
+
+        function addContact() {
+            const name = model.viewState.add.name.trim();
+            const phone = model.viewState.add.phone.trim();
+            const email = model.viewState.add.email.trim();
+
+            if (name === '' || phone === '' || email === '') return;
+
+            const newContact = {
+                id: createNewId(),
+                name,
+                phone,
+                email,
+            };
+
+            model.contacts.push(newContact);
+
+            model.viewState.add.name = '';
+            model.viewState.add.phone = '';
+            model.viewState.add.email = '';
+
+            model.app.currentPage = 'list';
+            updateView();
+        }
+
+        function saveEditedContact() {
+            const contact = getSelectedContact();
+            if (!contact) return;
+
+            const name = model.viewState.edit.name.trim();
+            const phone = model.viewState.edit.phone.trim();
+            const email = model.viewState.edit.email.trim();
+
+            if (name === '' || phone === '' || email === '') return;
+
+            contact.name = name;
+            contact.phone = phone;
+            contact.email = email;
+
+            model.app.currentPage = 'list';
+            model.app.selectedContactId = null;
+            updateView();
+        }
+
+        function deleteContact(id) {
+            model.contacts = model.contacts.filter(contact => contact.id !== id);
+            updateView();
+        }
+
+        function getSelectedContact() {
+            return model.contacts.find(c => c.id === model.app.selectedContactId);
+        }
+
+        function createNewId() {
+            if (model.contacts.length === 0) return 1;
+            return Math.max(...model.contacts.map(contact => contact.id)) + 1;
+        }
+
+        function escapeHtml(text) {
+            return String(text)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;');
+        }
+    </script>
+</body>
+</html>
