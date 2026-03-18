@@ -148,7 +148,7 @@
                         type="text"
                         placeholder="Søk på navn, telefon eller e-post"
                         value="${model.viewState.list.search}"
-                        oninput="model.viewState.list.search = this.value; updateView();"
+                        onchange="model.viewState.list.search = this.value; updateView();"
                     />
 
                     ${createContactsHtml()}
