@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kontakter og grupper - Emne 2-måten</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+            margin: 0;
+            padding: 24px;
+            color: #222;
+        }
+
+        #app {
+            max-width: 760px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+
+        h1, h2, h3 {
+            margin-top: 0;
+        }
+
+        .menu {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 14px;
+            border: 0;
+            border-radius: 8px;
+            background: #1976d2;
+            color: white;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button.secondary {
+            background: #666;
+        }
+
+        select,
+        input {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px;
+            margin-top: 6px;
+            margin-bottom: 14px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        .contact {
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 12px;
+            background: #fafafa;
+        }
+
+        .contact-name {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 6px;
+        }
+
+        .contact-actions {
+            display: flex;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .empty {
+            color: #666;
+            font-style: italic;
+        }
+
+        .section {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #ddd;
+        }
+
+        .group-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+
+        .group-name {
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const model = {
+            app: {
+                currentPage: 'list',
+            },
+            viewState: {
+                list: {
+                    search: '',
+                },
+                add: {
+                    name: '',
+                    phone: '',
+                    email: '',
+                },
+                edit: {
+                    id: null,
+                    name: '',
+                    phone: '',
+                    email: '',
+                    selectedGroupId: '',
+                },
+            },
+            contacts: [
+                { id: 1, name: 'Terje', phone: '123', email: 'terje@mail.com' },
+                { id: 2, name: 'Per', phone: '456', email: 'per@mail.com' },
+                { id: 3, name: 'Pål', phone: '789', email: 'paal@mail.com' },
+            ],
+            groups: [
+                { id: 1, name: 'Sykling' },
+                { id: 2, name: 'Konsert' },
+                { id: 3, name: 'Reise' },
+            ],
+            memberships: [
+                { contactId: 1, groupId: 1, created: '2026-03-18' },
+                { contactId: 1, groupId: 3, created: '2026-03-18' },
+                { contactId: 2, groupId: 2, created: '2026-03-18' },
+            ],
+        };
+
+        updateView();
+
+        function updateView() {
+            if (model.app.currentPage == 'add') {
+                updateViewAdd();
+            } else if (model.app.currentPage == 'edit') {
+                updateViewEdit();
+            } else {
+                updateViewList();
+            }
+        }
+
+        function updateViewList() {
+            let html = /*HTML*/`
+                <div class="card">
+                    <h1>Kontakter</h1>
+
+                    <div class="menu">
+                        <button onclick="goToList()">Liste</button>
+                        <button onclick="goToAdd()">Ny kontakt</button>
+                    </div>
+
+                    <label>Søk</label>
+                    <input
+                        type="text"
+                        placeholder="Søk på navn, telefon eller e-post"
+                        value="${model.viewState.list.search}"
+                        oninput="model.viewState.list.search = this.value; updateView();"
+                    />
+
+                    ${createContactsHtml()}
+                </div>
+            `;
+
+            document.getElementById('app').innerHTML = html;
+        }
+
+        function updateViewAdd() {
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <div class="card">
+                    <h1>Ny kontakt</h1>
+
+                    <div class="menu">
+                        <button class="secondary" onclick="goToList()">Tilbake til liste</button>
+                    </div>
+
+                    <label>Navn</label>
+                    <input
+                        type="text"
+                        value="${model.viewState.add.name}"
+                        oninput="model.viewState.add.name = this.value"
+                    />
+
+                    <label>Telefon</label>
+                    <input
+                        type="text"
+                        value="${model.viewState.add.phone}"
+                        oninput="model.viewState.add.phone = this.value"
+                    />
+
+                    <label>E-post</label>
+                    <input
+                        type="text"
+                        value="${model.viewState.add.email}"
+                        oninput="model.viewState.add.email = this.value"
+                    />
+
+                    <button onclick="addContact()">Lagre kontakt</button>
+                </div>
+            `;
+        }
+
+        function updateViewEdit() {
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <div class="card">
+                    <h1>Rediger kontakt</h1>
+
+                    <div class="menu">
+                        <button class="secondary" onclick="goToList()">Tilbake til liste</button>
+                    </div>
+
+                    <label>Navn</label>
+                    <input
+                        type="text"
+                        value="${model.viewState.edit.name}"
+                        oninput="model.viewState.edit.name = this.value"
+                    />
+
+                    <label>Telefon</label>
+                    <input
+                        type="text"
+                        value="${model.viewState.edit.phone}"
+                        oninput="model.viewState.edit.phone = this.value"
+                    />
+
+                    <label>E-post</label>
+                    <input
+                        type="text"
+                        value="${model.viewState.edit.email}"
+                        oninput="model.viewState.edit.email = this.value"
+                    />
+
+                    <button onclick="saveEditedContact()">Lagre endringer</button>
+
+                    <div class="section">
+                        <h3>Grupper</h3>
+
+                        <label>Legg til gruppe</label>
+                        <select onchange="model.viewState.edit.selectedGroupId = this.value">
+                            ${createGroupOptionsHtml()}
+                        </select>
+
+                        <button onclick="addMembership()">Legg til gruppe</button>
+
+                        <div style="margin-top: 20px;">
+                            ${createMembershipsHtml()}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createContactsHtml() {
+            const searchText = model.viewState.list.search.toLowerCase();
+            let html = '';
+            let count = 0;
+
+            for (let i = 0; i < model.contacts.length; i++) {
+                const contact = model.contacts[i];
+                if (contactMatchesSearch(contact, searchText)) {
+                    html += /*HTML*/`
+                        <div class="contact">
+                            <div class="contact-name">${contact.name}</div>
+                            <div>Telefon: ${contact.phone}</div>
+                            <div>E-post: ${contact.email}</div>
+                            <div>Grupper: ${createGroupNamesText(contact.id)}</div>
+                            <div class="contact-actions">
+                                <button onclick="goToEdit(${contact.id})">Rediger</button>
+                            </div>
+                        </div>
+                    `;
+                    count++;
+                }
+            }
+
+            if (count == 0) {
+                return `<p class="empty">Ingen kontakter funnet.</p>`;
+            }
+
+            return html;
+        }
+
+        function createGroupNamesText(contactId) {
+            let text = '';
+
+            for (let i = 0; i < model.memberships.length; i++) {
+                const membership = model.memberships[i];
+
+                if (membership.contactId == contactId) {
+                    const group = findGroupById(membership.groupId);
+
+                    if (group != null) {
+                        if (text != '') {
+                            text += ', ';
+                        }
+                        text += group.name;
+                    }
+                }
+            }
+
+            if (text == '') {
+                return 'Ingen grupper';
+            }
+
+            return text;
+        }
+
+        function createMembershipsHtml() {
+            const contactId = model.viewState.edit.id;
+            let html = '';
+            let count = 0;
+
+            for (let i = 0; i < model.memberships.length; i++) {
+                const membership = model.memberships[i];
+
+                if (membership.contactId == contactId) {
+                    const group = findGroupById(membership.groupId);
+
+                    if (group != null) {
+                        html += /*HTML*/`
+                            <div class="group-row">
+                                <div>
+                                    <div class="group-name">${group.name}</div>
+                                    <div>Startet: ${membership.created}</div>
+                                </div>
+                                <button onclick="removeMembership(${group.id})">Fjern</button>
+                            </div>
+                        `;
+                        count++;
+                    }
+                }
+            }
+
+            if (count == 0) {
+                return `<p class="empty">Kontakten er ikke medlem av noen grupper.</p>`;
+            }
+
+            return html;
+        }
+
+        function createGroupOptionsHtml() {
+            const contactId = model.viewState.edit.id;
+            let html = '<option value="">Velg gruppe</option>';
+
+            for (let i = 0; i < model.groups.length; i++) {
+                const group = model.groups[i];
+
+                if (!isMemberOfGroup(contactId, group.id)) {
+                    let selected = '';
+                    if (model.viewState.edit.selectedGroupId == group.id) {
+                        selected = 'selected';
+                    }
+
+                    html += `<option value="${group.id}" ${selected}>${group.name}</option>`;
+                }
+            }
+
+            return html;
+        }
+
+        function contactMatchesSearch(contact, searchText) {
+            if (searchText == '') return true;
+
+            const name = contact.name.toLowerCase();
+            const phone = contact.phone.toLowerCase();
+            const email = contact.email.toLowerCase();
+
+            return name.includes(searchText)
+                || phone.includes(searchText)
+                || email.includes(searchText);
+        }
+
+        function goToList() {
+            model.app.currentPage = 'list';
+            updateView();
+        }
+
+        function goToAdd() {
+            model.app.currentPage = 'add';
+            updateView();
+        }
+
+        function goToEdit(id) {
+            const contact = findContactById(id);
+            if (contact == null) return;
+
+            model.viewState.edit.id = contact.id;
+            model.viewState.edit.name = contact.name;
+            model.viewState.edit.phone = contact.phone;
+            model.viewState.edit.email = contact.email;
+            model.viewState.edit.selectedGroupId = '';
+            model.app.currentPage = 'edit';
+            updateView();
+        }
+
+        function addContact() {
+            const newContact = {
+                id: createNewId(),
+                name: model.viewState.add.name,
+                phone: model.viewState.add.phone,
+                email: model.viewState.add.email,
+            };
+
+            model.contacts.push(newContact);
+
+            model.viewState.add.name = '';
+            model.viewState.add.phone = '';
+            model.viewState.add.email = '';
+
+            model.app.currentPage = 'list';
+            updateView();
+        }
+
+        function saveEditedContact() {
+            const contact = findContactById(model.viewState.edit.id);
+            if (contact == null) return;
+
+            contact.name = model.viewState.edit.name;
+            contact.phone = model.viewState.edit.phone;
+            contact.email = model.viewState.edit.email;
+
+            model.app.currentPage = 'list';
+            updateView();
+        }
+
+        function addMembership() {
+            const contactId = model.viewState.edit.id;
+            const groupId = Number(model.viewState.edit.selectedGroupId);
+
+            if (!groupId) return;
+            if (isMemberOfGroup(contactId, groupId)) return;
+
+            model.memberships.push({
+                contactId: contactId,
+                groupId: groupId,
+                created: '2026-03-18',
+            });
+
+            model.viewState.edit.selectedGroupId = '';
+            updateView();
+        }
+
+        function removeMembership(groupId) {
+            const contactId = model.viewState.edit.id;
+
+            for (let i = 0; i < model.memberships.length; i++) {
+                const membership = model.memberships[i];
+
+                if (membership.contactId == contactId && membership.groupId == groupId) {
+                    model.memberships.splice(i, 1);
+                    break;
+                }
+            }
+
+            updateView();
+        }
+
+        function isMemberOfGroup(contactId, groupId) {
+            for (let i = 0; i < model.memberships.length; i++) {
+                const membership = model.memberships[i];
+
+                if (membership.contactId == contactId && membership.groupId == groupId) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        function findContactById(id) {
+            for (let i = 0; i < model.contacts.length; i++) {
+                if (model.contacts[i].id == id) {
+                    return model.contacts[i];
+                }
+            }
+            return null;
+        }
+
+        function findGroupById(id) {
+            for (let i = 0; i < model.groups.length; i++) {
+                if (model.groups[i].id == id) {
+                    return model.groups[i];
+                }
+            }
+            return null;
+        }
+
+        function createNewId() {
+            let highestId = 0;
+
+            for (let i = 0; i < model.contacts.length; i++) {
+                if (model.contacts[i].id > highestId) {
+                    highestId = model.contacts[i].id;
+                }
+            }
+
+            return highestId + 1;
+        }
+    </script>
+</body>
+</html>
