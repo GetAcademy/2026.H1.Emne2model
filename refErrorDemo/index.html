@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="no">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Referansefeil med objekter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+            line-height: 1.4;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .form-row {
+            margin-bottom: 0.75rem;
+        }
+
+        label {
+            display: inline-block;
+            width: 60px;
+        }
+
+        input {
+            padding: 0.35rem;
+            width: 220px;
+        }
+
+        button {
+            padding: 0.5rem 0.8rem;
+            margin-top: 0.5rem;
+        }
+
+        ul {
+            margin-top: 1rem;
+        }
+
+        .box {
+            border: 1px solid #ccc;
+            padding: 1rem;
+            max-width: 500px;
+        }
+
+        .hint {
+            margin-top: 1rem;
+            color: #555;
+            font-size: 0.95rem;
+        }
+
+        code {
+            background: #f3f3f3;
+            padding: 0.1rem 0.3rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script>
+        const model = {
+            viewState: {
+                name: 'Terje',
+                city: 'Stavern',
+            },
+            people: [],
+        };
+
+        updateView();
+
+        function updateView() {
+            let peopleHtml = '';
+            for (let i = 0; i < model.people.length; i++) {
+                const person = model.people[i];
+                peopleHtml += `
+                    <li>
+                        ${person.name} fra ${person.city}
+                    </li>
+                `;
+            }
+
+            document.getElementById('app').innerHTML = `
+                <div class="box">
+                    <h1>Referanser til objekter</h1>
+
+                    <div class="form-row">
+                        <label for="name">Navn</label>
+                        <input
+                            id="name"
+                            type="text"
+                            value="${model.viewState.name}"
+                            oninput="changeName(this.value)"
+                        />
+                    </div>
+
+                    <div class="form-row">
+                        <label for="city">By</label>
+                        <input
+                            id="city"
+                            type="text"
+                            value="${model.viewState.city}"
+                            oninput="changeCity(this.value)"
+                        />
+                    </div>
+
+                    <button onclick="addPerson()">Legg til</button>
+
+                    <h2>Personer</h2>
+                    <ul>
+                        ${peopleHtml}
+                    </ul>
+
+                    <div class="hint">
+                        Prøv å legge til flere personer og endre feltene mellom hver gang.
+                        Med feil løsning vil alle radene i listen endre seg samtidig.
+                    </div>
+                </div>
+            `;
+        }
+
+        function changeName(value) {
+            model.viewState.name = value;
+        }
+
+        function changeCity(value) {
+            model.viewState.city = value;
+        }
+
+        function addPerson() {
+            // FEIL:
+            // Samme objekt legges inn i listen hver gang.
+            // Alle elementene peker til samme objekt i minnet.
+            // model.people.push(model.viewState);
+
+            // RIKTIG 1: structuredClone
+            model.people.push(structuredClone(model.viewState));
+
+            // RIKTIG 2: spread operator
+            // model.people.push({ ...model.viewState });
+
+            // RIKTIG 3: manuell kopiering
+            // model.people.push({
+            //     name: model.viewState.name,
+            //     city: model.viewState.city,
+            // });
+
+            updateView();
+        }
+    </script>
+</body>
+
+</html>
