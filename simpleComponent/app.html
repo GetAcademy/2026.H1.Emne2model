@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app"></div>
+
+    <script>
+        updateView();
+        function updateView() {
+            document.getElementById('app').innerHTML = /*HTML*/`
+                ${createFieldset('Terje', 'Bla bla bla.', 'Noe', "alert('Terje')")}
+                ${createFieldset('Per', 'Bla bla bla.', 'Noe annet', "alert('Per')")}
+                ${createFieldset('Pål', 'Bla bla bla.', 'Noe tredje', "alert('Pål')")}
+            `;
+            /*
+                <fieldset>
+                    <legend>Terje</legend>
+                    <p>Bla bla bla.</p>
+                    <button>Noe</button>
+                </fieldset>
+                <fieldset>
+                    <legend>Per</legend>
+                    <p>Bla bla bla.</p>
+                    <button>Noe annet</button>
+                    </fieldset>
+                <fieldset>
+                    <legend>På</legend>
+                    <p>Bla bla bla.</p>
+                    <button>Noe tredje</button>
+                </fieldset>
+
+            */
+        }
+
+        function createFieldset(title, text, btnLabel, onclick) {
+            return /*HTML*/`
+                <fieldset>
+                    <legend>${title}</legend>
+                    <div>${text}</div>
+                    <button onclick="${onclick}">${btnLabel}</button>
+                </fieldset>
+            `;
+        }
+    </script>
+</body>
+
+</html>
