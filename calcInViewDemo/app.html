@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="no">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Emne 2 - beregnet sum</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 2rem;
+        }
+
+        .box {
+            max-width: 500px;
+            padding: 1rem 1.5rem;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin: 0.25rem 0;
+        }
+
+        .sum {
+            margin-top: 1rem;
+            font-weight: bold;
+        }
+
+        .comment {
+            margin-top: 1rem;
+            color: #555;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div id="app"></div>
+
+    <script>
+        const model = {
+            viewState: {
+                newNumber: null,
+            },
+            numbers: [4, 7, 2, 9, 5]
+        };
+
+        updateView();
+
+        function updateView() {
+            let sum = 0;
+            let listHtml = '';
+
+            for (let number of model.numbers) {
+                sum += number;
+                listHtml += `<li>${number}</li>`;
+            }
+
+            document.getElementById('app').innerHTML = /*HTML*/`
+                <div class="box">
+                    <h1>Liste med tall</h1>
+
+                    <ul>
+                        ${listHtml}
+                    </ul>
+
+                    <div class="sum">Sum: ${sum}</div>
+
+                    <hr/>
+                    <input 
+                        type="number"
+                        oninput="model.viewState.newNumber=this.valueAsNumber"
+                        value="${model.viewState.newNumber ?? ''}"                        
+                        />
+                    <button onclick="addNumber()">Legg til</button>
+                </div>
+            `;
+        }
+
+        function addNumber(){
+            model.numbers.push(model.viewState.newNumber);
+            model.viewState.newNumber = '';
+            // IKKE beregne sum her og IKKE lagre i modell
+            updateView();
+        }
+    </script>
+</body>
+</html>
