@@ -83,7 +83,7 @@
                 `;
             }
 
-            document.getElementById('app').innerHTML = `
+            document.getElementById('app').innerHTML = /*HTML*/`
                 <div class="box">
                     <h1>Referanser til objekter</h1>
 
@@ -93,7 +93,7 @@
                             id="name"
                             type="text"
                             value="${model.viewState.name}"
-                            oninput="changeName(this.value)"
+                            oninput="model.viewState.name = value;"
                         />
                     </div>
 
@@ -103,7 +103,7 @@
                             id="city"
                             type="text"
                             value="${model.viewState.city}"
-                            oninput="changeCity(this.value)"
+                            oninput="model.viewState.city = value;"
                         />
                     </div>
 
@@ -122,31 +122,23 @@
             `;
         }
 
-        function changeName(value) {
-            model.viewState.name = value;
-        }
-
-        function changeCity(value) {
-            model.viewState.city = value;
-        }
-
         function addPerson() {
             // FEIL:
             // Samme objekt legges inn i listen hver gang.
             // Alle elementene peker til samme objekt i minnet.
             // model.people.push(model.viewState);
 
-            // RIKTIG 1: structuredClone
-            model.people.push(structuredClone(model.viewState));
-
+            // RIKTIG 1: manuell kopiering
+            model.people.push({
+                name: model.viewState.name,
+                city: model.viewState.city,
+            });
+            
             // RIKTIG 2: spread operator
             // model.people.push({ ...model.viewState });
 
-            // RIKTIG 3: manuell kopiering
-            // model.people.push({
-            //     name: model.viewState.name,
-            //     city: model.viewState.city,
-            // });
+            // RIKTIG 3: structuredClone
+            // model.people.push(structuredClone(model.viewState));
 
             updateView();
         }
